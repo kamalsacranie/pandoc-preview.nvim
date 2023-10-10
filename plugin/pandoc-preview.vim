@@ -11,11 +11,11 @@ if !has('nvim')
   finish
 endif
 
-lua require'pandoc-preview'.setup()
+" lua require'pandoc-preview'.setup()
 let g:pandoc_preview_loaded = 1
 
 " Create vim command
-command! JestTest :lua require'jest-tester'.test()
+" command! JestTest :lua require'jest-tester'.test()
 
 " let &cpo = s:save_cpo
 " unlet s:save_cpo

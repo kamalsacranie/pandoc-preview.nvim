@@ -37,7 +37,7 @@ local multi_line_string_to_table = function(string)
   return string_table
 end
 
-local function preview()
+M.preview = function()
   local tempdir = vim.fn.tempname()
   local status = vim.fn.mkdir(tempdir, "p")
   if not status then
@@ -47,9 +47,8 @@ local function preview()
   end
 
   local latex_template_path = tempdir .. "/standalone.latex" -- check what tex packages are required. maybe i can just put them in the repo
-  local latex_template_table = multi_line_string_to_table(
-    require("pandoc-preview.data").latex_template_raw
-  )
+  local latex_template_table =
+    multi_line_string_to_table(require("data").latex_template_raw)
 
   if vim.fn.writefile(latex_template_table, latex_template_path) == -1 then
     error "failed to create temporary latex template"
@@ -74,31 +73,66 @@ local function preview()
 
   -- do this multithreaded
   local stdout
-  local status = vim
-    .system({
-      "pandoc",
-      "--template=" .. latex_template_path,
-      "-o",
-      tempdir .. "/" .. output_file_name,
-    }, {
-      stdin = markdown,
-    })
-    :wait()
+  local status = vim.system({
+    "pandoc",
+    "--template=" .. latex_template_path,
+    "-o",
+    tempdir .. "/" .. output_file_name,
+  }, {
+    stdin = markdown,
+  }, function()
+    vim.defer_fn(function()
+      vim.system({
+        "pdftoppm",
+        tempdir .. "/" .. output_file_name,
+        "-png",
+        "-r",
+        "600",
+      }, {}, function(obj)
+        vim.defer_fn(function()
+          if
+            vim.fn.writefile(
+              obj.stdout,
+              tempdir .. "/" .. output_file_name .. ".png"
+            ) == -1
+          then
+            error "Could not create temporary png"
+          end
+          local image = require("image").from_file(
+            tempdir .. "/" .. output_file_name .. ".png"
+          )
+          -- vim.api.nvim_open_win(
+          --   vim.api.nvim_create_buf(false, true),
+          --   false,
+          --   { relative = "win", row = 3, col = 3, width = 150, height = 20 }
+          -- )
+          image:render { width = 80 }
+          vim.on_key(function(key) -- not sure how to stop this function running
+            if
+              "\27" == vim.api.nvim_replace_termcodes(key, true, false, true)
+            then
+              image:clear()
+            end
+          end, 1)
+        end, 0)
+      end)
+    end, 0)
+  end)
 
-  vim
-    .system({
-      "pdftoppm",
-      tempdir .. "/" .. output_file_name,
-      "-png",
-      "-r",
-      "600",
-    }, {}, function(obj)
-      stdout = obj.stdout
-    end)
-    :wait()
-  vim.fn.writefile(stdout, tempdir .. "/output_file_name.png")
-  local image = require("image").from_file(tempdir .. "/output_file_name.png")
-  image:render()
+  -- vim
+  --   .system({
+  --     "pdftoppm",
+  --     tempdir .. "/" .. output_file_name,
+  --     "-png",
+  --     "-r",
+  --     "600",
+  --   }, {}, function(obj)
+  --     stdout = obj.stdout
+  --   end)
+  --   :wait()
+  -- vim.fn.writefile(stdout, tempdir .. "/output_file_name.png")
+  -- local image = require("image").from_file(tempdir .. "/output_file_name.png")
+  -- image:render()
 end
 
 return M
