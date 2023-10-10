@@ -1,0 +1,16 @@
+*clipboard-image*             for Neovim 0.8+        Last modified: 2023-05-24
+
+Author: Kamal Sacranie
+Repo: <github.com/kamalsacranie/nvim-jest-tester>
+License: MIT
+
+===============================================================================
+CONTENTS                                             *jest-tester-contents*
+
+NOTE:
+  Press CTRL-] on the highlighted words to jump to the corresponding tag. Press
+  CTRL-T to come back. See `:help tag` for more info.
+
+===============================================================================
+
+vim:tw=78:ts=8:noet:ft=help:norl:
